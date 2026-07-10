@@ -27,7 +27,7 @@
       />
     </div>
     <span
-      class="text-xs text-ink-gray-5 line-clamp-1 ml-2"
+      class="text-xs text-ink-gray-5 line-clamp-1 ms-2"
       :class="isExpanded ? 'opacity-100' : 'opacity-0'"
     >{{ formattedString }}</span>
   </div>

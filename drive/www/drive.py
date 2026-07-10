@@ -1,6 +1,8 @@
 from __future__ import unicode_literals
 
 import frappe
+from frappe.translate import get_user_lang
+from frappe.utils.jinja_globals import is_rtl
 
 from drive.api.permissions import get_user_access
 
@@ -56,6 +58,8 @@ def get_boot():
             "default_route": get_default_route(),
             "site_name": frappe.local.site,
             "read_only_mode": frappe.flags.read_only,
+            "lang": get_user_lang(),
+            "text_direction": "rtl" if is_rtl() else "ltr",
         }
     )
 
