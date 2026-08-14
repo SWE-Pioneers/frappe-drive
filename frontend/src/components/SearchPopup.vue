@@ -6,13 +6,13 @@
     <template #body>
       <div class="flex px-4 py-3 gap-1 items-center border-b">
         <LucideSearch
-          class="w-4 mr-1 h-auto"
+          class="w-4 me-1 h-auto"
           name="search"
         />
         <input
           v-model="search"
           type="text"
-          class="appearance-none forced-colors:hidden w-full border-none bg-transparent py-3 pl-11.5 pr-4.5 text-base text-ink-gray-8 placeholder-ink-gray-4 focus:ring-0"
+          class="appearance-none forced-colors:hidden w-full border-none bg-transparent py-3 ps-11.5 pe-4.5 text-base text-ink-gray-8 placeholder-ink-gray-4 focus:ring-0"
           placeholder="Find"
         >
       </div>
@@ -20,7 +20,7 @@
         v-if="searchResults.data?.length"
         class="flex flex-col p-2.5 overflow-y-auto overflow-x-auto max-h-[50vh]"
       >
-        <span class="mb-2 pl-1 text-sm text-ink-gray-5">Results for <strong>{{ search }}:</strong></span>
+        <span class="mb-2 ps-1 text-sm text-ink-gray-5">Results for <strong>{{ search }}:</strong></span>
         <div
           v-for="entity in searchResults.data"
           :key="entity.name"
@@ -40,7 +40,7 @@
             <Avatar
               :image="entity.user_image"
               :label="entity.full_name || entity.user_name"
-              class="relative mr-2"
+              class="relative me-2"
               size="xs"
             />
             <span class="text-base text-ink-gray-8">{{
@@ -53,7 +53,7 @@
         v-if="!searchResults.data?.length && search.length"
         class="flex flex-col py-4 px-2.5"
       >
-        <span class="pl-2 text-sm text-ink-gray-6">
+        <span class="ps-2 text-sm text-ink-gray-6">
           <template v-if="search.length > 2">
             No results for <strong>"{{ search }}"</strong>
           </template>
@@ -73,7 +73,7 @@
               emitter.emit('showSearchPopup', false)
             "
           >
-            <LucideHome class="mr-2 size-4 text-ink-gray-7" />
+            <LucideHome class="me-2 size-4 text-ink-gray-7" />
             Home
           </div>
           <div
@@ -83,7 +83,7 @@
               emitter.emit('showSearchPopup', false)
             "
           >
-            <LucideClock class="mr-2 size-4 text-ink-gray-7" />
+            <LucideClock class="me-2 size-4 text-ink-gray-7" />
             Recents
           </div>
           <div
@@ -93,7 +93,7 @@
               emitter.emit('showSearchPopup', false)
             "
           >
-            <LucideStar class="mr-2 size-4 text-ink-gray-7" />
+            <LucideStar class="me-2 size-4 text-ink-gray-7" />
             Favourites
           </div>
         </div>
@@ -106,7 +106,7 @@
             "
           >
             <LucideFilePlus2
-              class="stroke-[1.35] mr-2 size-4 text-ink-gray-7"
+              class="stroke-[1.35] me-2 size-4 text-ink-gray-7"
             />
             Upload File
           </div>
@@ -118,7 +118,7 @@
             "
           >
             <LucideFolderPlus
-              class="stroke-[1.35] mr-2 size-4 text-ink-gray-7"
+              class="stroke-[1.35] me-2 size-4 text-ink-gray-7"
             />
             Upload Folder
           </div>

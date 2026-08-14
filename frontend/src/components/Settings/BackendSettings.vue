@@ -5,7 +5,7 @@
     </h1>
     <Button
       label="Sync"
-      class="ml-auto mr-4"
+      class="ms-auto me-4"
       @click="confirmSync"
     />
   </div>
@@ -16,7 +16,7 @@
     />
     <div
       v-else
-      class="flex flex-col gap-4 pb-5 pr-5"
+      class="flex flex-col gap-4 pb-5 pe-5"
     >
       <FormControl
         v-model="generalSettings.root_folder"

@@ -65,7 +65,7 @@
           <Tooltip text="You requested an invite from this team.">
             <Badge
               v-if="invite.status === 'Proposed'"
-              class="my-auto mr-2"
+              class="my-auto me-2"
               theme="orange"
             >
               Requested

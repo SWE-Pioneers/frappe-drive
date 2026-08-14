@@ -14,7 +14,7 @@
       <span class="text-base text-ink-gray-6">{{ $store.state.user.id }}</span>
     </div>
     <Button
-      class="ml-auto"
+      class="ms-auto"
       @click="editProfileDialog = true"
     >
       {{ __("Edit profile") }}
@@ -47,9 +47,9 @@
 
           <div
             v-if="newImageUrl"
-            class="flex items-center justify-between bg-surface-gray-2 h-7 pl-2 text-base rounded"
+            class="flex items-center justify-between bg-surface-gray-2 h-7 ps-2 text-base rounded"
           >
-            <LucideLink class="mr-2" />
+            <LucideLink class="me-2" />
             <a
               :href="newImageUrl"
               class="truncate max-w-56 underline"

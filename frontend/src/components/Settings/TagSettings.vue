@@ -4,7 +4,7 @@
       {{ __("Tags") }}
     </h1>
     <Button
-      class="ml-auto mr-4"
+      class="ms-auto me-4"
       variant="solid"
       icon-left="plus"
       @click="showNewTagDialog = true"
@@ -30,7 +30,7 @@
           <span class="text-sm text-ink-gray-8">{{ tag.title }}</span>
         </div>
         <Dropdown
-          class="ml-auto"
+          class="ms-auto"
           placement="right"
           :options="[
             {

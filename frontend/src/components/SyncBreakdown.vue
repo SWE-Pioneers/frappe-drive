@@ -44,20 +44,20 @@
             />
           </template>
           <template #label="{ node, hasChildren, isCollapsed }">
-            <div class="text-base truncate pl-3.5 flex gap-2">
+            <div class="text-base truncate ps-3.5 flex gap-2">
               <template v-if="hasChildren">
                 <LucideFolderClosed
                   v-if="isCollapsed"
-                  class="mr-1 size-4"
+                  class="me-1 size-4"
                 />
                 <LucideFolder
                   v-else
-                  class="mr-1 size-4"
+                  class="me-1 size-4"
                 />
               </template>
               <LucideFile
                 v-else
-                class="mr-1 size-4"
+                class="me-1 size-4"
               />
               <div class="flex gap-1 select-none">
                 {{ node.label }}

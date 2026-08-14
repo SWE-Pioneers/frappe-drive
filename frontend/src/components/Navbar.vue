@@ -19,7 +19,7 @@
           />
           <div
             v-if="index == 0"
-            class="mr-1.5"
+            class="me-1.5"
           >
             <component
               :is="COMPONENT_MAP[item.name]"
@@ -35,7 +35,7 @@
         id="navbar-content"
         class="flex items-center"
       >
-        <div class="icon mr-2">
+        <div class="icon me-2">
           <LucideGlobe2
             v-if="rootEntity?.share_count === -2"
             class="size-4"

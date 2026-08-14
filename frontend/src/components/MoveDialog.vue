@@ -20,7 +20,7 @@
             </template>
           </div>
           <Button
-            class="ml-auto"
+            class="ms-auto"
             variant="ghost"
             @click="dialogType = ''"
           >
@@ -84,7 +84,7 @@
                       />
                     </div>
                     <div
-                      class="flex-grow rounded-sm text-base truncate h-full flex items-center pl-1"
+                      class="flex-grow rounded-sm text-base truncate h-full flex items-center ps-1"
                       :class="[
                         selected === node.value
                           ? 'bg-surface-gray-3'
@@ -96,11 +96,11 @@
                     >
                       <LucideFolderClosed
                         v-if="isCollapsed"
-                        class="mr-1 size-4"
+                        class="me-1 size-4"
                       />
                       <LucideFolder
                         v-else
-                        class="mr-1 size-4"
+                        class="me-1 size-4"
                       />
                       <div
                         v-if="node.value === null"
@@ -124,7 +124,7 @@
                         ></span
                       >
                       <Button
-                        class="shrink hidden group-hover:block ml-auto"
+                        class="shrink hidden group-hover:block ms-auto"
                         :class="{
                           '!bg-surface-gray-3': selected === node.value,
                         }"
@@ -168,7 +168,7 @@
         </Tabs>
         <div class="flex items-center justify-between pt-4">
           <div class="flex items-center my-auto justify-start">
-            <p class="text-sm pr-0.5">Moving to:</p>
+            <p class="text-sm pe-0.5">Moving to:</p>
             <Dropdown
               v-if="dropDownBreadcrumbs.length"
               class="h-7"
@@ -211,7 +211,7 @@
           </div>
           <Button
             variant="solid"
-            class="ml-auto"
+            class="ms-auto"
             size="sm"
             :disabled="isMoveDisabled"
             :loading="move.loading"

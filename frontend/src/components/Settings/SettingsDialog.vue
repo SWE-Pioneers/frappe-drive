@@ -12,11 +12,11 @@
           class="flex w-52 shrink-0 flex-col bg-surface-menu-bar py-3 p-4 border-r"
         >
           <div class="flex justify-between items-center">
-            <h1 class="text-xl font-semibold leading-6 text-ink-gray-9 pr-2">
+            <h1 class="text-xl font-semibold leading-6 text-ink-gray-9 pe-2">
               {{ __("Settings") }}
             </h1>
             <!-- <Button
-              class="ml-auto text-sm"
+              class="ms-auto text-sm"
               variant="ghost"
               label="Exit"
               @click="$emit('update:modelValue', false)"

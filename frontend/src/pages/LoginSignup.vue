@@ -170,7 +170,7 @@
                 >
                   <div class="flex items-center">
                     <div v-html="provider.icon" />
-                    <span class="ml-2"
+                    <span class="ms-2"
                       >{{ isLogin ? "Continue" : "Join" }} with
                       {{ provider.provider_name }}</span
                     >

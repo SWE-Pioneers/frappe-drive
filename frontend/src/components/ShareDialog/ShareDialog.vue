@@ -11,7 +11,7 @@
             </div>
             "
           </div>
-          <Button class="ml-auto shrink-0" variant="ghost" @click="$emit('update:modelValue', false)">
+          <Button class="ms-auto shrink-0" variant="ghost" @click="$emit('update:modelValue', false)">
             <template #icon>
               <LucideX class="size-4" />
             </template>
@@ -29,7 +29,7 @@
                   (val) => updateGeneralAccess(val, generalPerms)
                 ">
                   <template #prefix>
-                    <component :is="generalAccessLevel.icon" class="mr-2 size-4 text-ink-gray-6" />
+                    <component :is="generalAccessLevel.icon" class="me-2 size-4 text-ink-gray-6" />
                   </template>
                   <template #item-prefix="{ option }">
                     <component :is="option.icon" class="size-4 text-ink-gray-6" />
@@ -120,7 +120,7 @@
           </div>
 
           <div v-if="getUsersWithAccess.data" class="flex flex-col gap-4 overflow-y-auto text-base max-h-80 py-4 mb-3">
-            <div v-for="(user, idx) in getUsersWithAccess.data" :key="user.name" class="flex items-center gap-x-3 pr-1">
+            <div v-for="(user, idx) in getUsersWithAccess.data" :key="user.name" class="flex items-center gap-x-3 pe-1">
               <Avatar size="xl" :label="user.user || user.email" :image="user.user_image" />
 
               <div class="flex items-start flex-col gap-1">
@@ -131,14 +131,14 @@
                   user.full_name ? user.user || user.email : ""
                   }}</span>
               </div>
-              <span v-if="user.user == $store.state.user.id" class="ml-auto mr-1 text-ink-gray-7">
+              <span v-if="user.user == $store.state.user.id" class="ms-auto me-1 text-ink-gray-7">
                 <div v-if="user.user === entity.owner" class="flex gap-1">
                   Owner (you)
                 </div>
                 <template v-else>You</template>
               </span>
               <AccessButton v-else-if="user.user !== entity.owner"
-                class="text-ink-gray-7 relative flex-shrink-0 ml-auto" :access-obj="user"
+                class="text-ink-gray-7 relative flex-shrink-0 ms-auto" :access-obj="user"
                 :access-levels="filteredAccess" :folder="entity.is_group && true" @update-access="
                   (access) =>
                     updateAccess.submit({
@@ -154,7 +154,7 @@
                     user: user.user,
                   })
                   " />
-              <span v-else class="ml-auto flex items-center gap-1 text-ink-gray-5">
+              <span v-else class="ms-auto flex items-center gap-1 text-ink-gray-5">
                 Owner
                 <LucideDiamond class="size-3" />
               </span>

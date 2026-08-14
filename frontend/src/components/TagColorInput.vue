@@ -34,7 +34,7 @@
             type="text"
             class="rounded-md text-sm text-ink-gray-7 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300 dark:focus:bg-zinc-700"
             :placeholder="__('Set Color')"
-            input-class="pl-8 pr-6"
+            input-class="ps-8 pe-6"
             :value="value"
             @change="
               (value) => {

@@ -7,7 +7,7 @@
       variant="solid"
       :icon-left="h(LucidePlus, { class: 'size-4' })"
       :label="__('New')"
-      class="ml-auto"
+      class="ms-auto"
       @click="showAddTeam = true"
     />
   </div>
@@ -103,7 +103,7 @@
     <Button
       label="Invite"
       :icon-left="h(LucideMail, { class: 'size-4' })"
-      class="ml-auto"
+      class="ms-auto"
       @click="showInvite = true"
     />
   </div>
@@ -126,7 +126,7 @@
           <div
             v-for="user in allUsers?.data"
             :key="user.user_name"
-            class="flex items-center justify-start pr-4 gap-x-3 py-2"
+            class="flex items-center justify-start pe-4 gap-x-3 py-2"
           >
             <Avatar
               :image="user.user_image"
@@ -141,7 +141,7 @@
             </div>
             <div
               v-if="isAdmin.data && user.name != $store.state.user.id"
-              class="ml-auto"
+              class="ms-auto"
             >
               <Dropdown
                 v-slot="{ open }"
@@ -174,7 +174,7 @@
             </div>
             <span
               v-else
-              class="ml-auto text-base text-ink-gray-6"
+              class="ms-auto text-base text-ink-gray-6"
             >
               {{
                 __(
@@ -207,7 +207,7 @@
             v-if="index > 0"
             class="w-[95%] mx-auto h-px border-t border-outline-gray-modals"
           />
-          <div class="flex items-center justify-start py-2 pl-2 pr-4 gap-x-3">
+          <div class="flex items-center justify-start py-2 ps-2 pe-4 gap-x-3">
             <div class="flex justify-between w-full">
               <div class="flex flex-col gap-0.5">
                 <span class="text-base my-auto text-ink-gray-8">{{
@@ -229,7 +229,7 @@
                   <Badge
                     :theme="invite.status === 'Pending' ? 'gray' : 'orange'"
                     variant="subtle"
-                    class="my-auto mr-2"
+                    class="my-auto me-2"
                     size="sm"
                   >
                     {{ __(invite.status) }}
@@ -308,7 +308,7 @@
               type="text"
               autocomplete="off"
               placeholder="Enter email address"
-              class="h-7 w-full rounded border-none bg-surface-gray-2 py-1.5 pl-2 pr-2 text-base text-ink-gray-8 placeholder-ink-gray-4 transition-colors focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0"
+              class="h-7 w-full rounded border-none bg-surface-gray-2 py-1.5 ps-2 pe-2 text-base text-ink-gray-8 placeholder-ink-gray-4 transition-colors focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0"
               @keydown="isValidEmail"
               @keydown.enter.capture.stop="extractEmails"
               @keydown.space.prevent.stop="extractEmails"

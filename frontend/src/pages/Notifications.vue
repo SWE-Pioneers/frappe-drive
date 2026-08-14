@@ -20,7 +20,7 @@
       <Button
         :loading="notifications.loading"
         icon="refresh-ccw"
-        class="mr-2"
+        class="me-2"
         @click="notifications.reload()"
       />
       <Button

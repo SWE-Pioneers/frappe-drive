@@ -140,7 +140,7 @@
                   >
                 </div>
                 <Dropdown
-                  class="ml-auto opacity-0"
+                  class="ms-auto opacity-0"
                   :class="
                     activeComment === comment.name &&
                     !reply.edit &&
