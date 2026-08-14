@@ -24,7 +24,7 @@
           @click="openEntity(entity), (open = false)"
         >
           <div class="flex items-center gap-2 w-full col-span-6">
-            <img class="size-4" :src="getIconUrl(entity.is_folder ? 'Folder' : entity.file_type)" />
+            <img class="size-4" :src="getIconUrl(entity.is_folder ? 'Folder' : entity.file_type)" alt="" />
             <span class="truncate">{{ entity.file_name }}</span>
           </div>
           <div class="col-span-2 grid grid-flow-col justify-start items-center truncate">

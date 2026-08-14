@@ -29,6 +29,7 @@
       loading="lazy"
       class="h-full"
       :src="getIconUrl(entity.file_type)"
+      alt=""
       :draggable="false"
     />
     <span

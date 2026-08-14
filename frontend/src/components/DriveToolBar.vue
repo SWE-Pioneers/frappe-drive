@@ -36,7 +36,7 @@
         <div v-if="activeFilters.length" class="flex flex-wrap items-start justify-end gap-1 ml-3">
           <div v-for="({ icon, name }, index) in activeFilters" :key="index">
             <div class="flex items-center border rounded pl-2 py-1 h-7 text-base select-none">
-              <img class="w-4" :src="icon" />
+              <img class="w-4" :src="icon" alt="" />
               <span class="text-sm ml-2">{{ name }}</span>
               <Button variant="minimal" :icon="h(LucideX, { class: 'size-3' })"
                 @click="activeFilters.splice(index, 1)" />

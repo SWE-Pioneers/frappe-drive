@@ -90,7 +90,7 @@
       @mouseenter="hoveredRow = i.name"
       @mouseleave="hoveredRow = null"
     >
-      <img :src="getIconUrl(i.file_type)" />
+      <img :src="getIconUrl(i.file_type)" alt="">
       <span class="text-ink-gray-8 text-sm truncate">{{ i.file_name }}</span>
 
       <div class="text-ink-gray-8 text-sm ml-auto flex gap-2 h-10 leading-10">

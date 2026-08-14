@@ -6,12 +6,14 @@
         loading="lazy"
         class="h-[16px] w-[16px] rounded-sm"
         :src="fallback"
+        alt=""
         :draggable="false"
       />
       <img
         v-show="imgLoaded"
         class="h-[16px] w-[16px] object-cover rounded-sm"
         :src="src"
+        alt=""
         :draggable="false"
         @load="imgLoaded = true"
       />

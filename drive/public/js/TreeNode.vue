@@ -31,7 +31,7 @@
     </span>
     <div v-if="node.file_url && frappe.utils.is_image_file(node.file_url)">
       <div v-show="isOpen" class="popover" ref="popover" role="tooltip">
-        <img :src="node.file_url" />
+        <img :src="node.file_url" :alt="node.label" />
       </div>
     </div>
     <ul class="tree-children" v-show="node.open">

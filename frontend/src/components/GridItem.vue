@@ -7,6 +7,7 @@
       loading="lazy"
       class="h-10 w-auto"
       :src="fallback"
+      alt=""
       :draggable="false"
     />
     <img
@@ -17,6 +18,7 @@
           : 'h-10 w-auto'
       "
       :src="src"
+      alt=""
       :draggable="false"
       @load="imgLoaded = true"
     />
@@ -34,6 +36,7 @@
           loading="lazy"
           class="h-4 w-auto"
           :src="getIconUrl(file.file_type)"
+          alt=""
           :draggable="false"
         />
         <p class="truncate">

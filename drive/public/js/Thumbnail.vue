@@ -1,8 +1,9 @@
 <template>
-  <img v-if="!imgLoaded" loading="lazy" :src="backupLink" :draggable="false" />
+  <img v-if="!imgLoaded" loading="lazy" :src="backupLink" alt="" :draggable="false" />
   <img
     v-show="imgLoaded"
     :src="src"
+    alt=""
     :draggable="false"
     @error="src = backupLink"
     @load="imgLoaded = true"
