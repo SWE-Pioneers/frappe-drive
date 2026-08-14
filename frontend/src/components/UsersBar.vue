@@ -5,11 +5,11 @@
     :options="users"
   >
     <template #default>
-      <div class="ml-2.5 flex items-center rounded-md cursor-pointer">
+      <div class="ms-2.5 flex items-center rounded-md cursor-pointer">
         <div
           v-for="user in users"
           :key="user.name"
-          class="-ml-2.5 -py-0.5 flex items-center rounded-full"
+          class="-ms-2.5 -py-0.5 flex items-center rounded-full"
         >
           <Avatar
             class="-"
@@ -37,13 +37,13 @@
             :label="item.name"
             :title="item.name"
           />
-          <div class="text-sm text-ink-gray-8 mr-4 flex flex-col gap-0.5">
+          <div class="text-sm text-ink-gray-8 me-4 flex flex-col gap-0.5">
             <span>{{ item.name }}</span>
             <span class="text-xs text-ink-gray-5">{{ item.id }}</span>
           </div>
         </div>
         <svg
-          class="ml-auto"
+          class="ms-auto"
           width="16"
           height="16"
           viewBox="0 0 16 16"

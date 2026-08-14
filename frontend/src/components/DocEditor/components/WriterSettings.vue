@@ -18,7 +18,7 @@
                 <h3 class="text-sm font-medium text-ink-gray-7 mb-3">
                   Configuration
                 </h3>
-                <div class="flex flex-col gap-4 pb-5 pr-5">
+                <div class="flex flex-col gap-4 pb-5 pe-5">
                   <FormControl
                     v-model="settings.versioning"
                     type="number"
@@ -40,7 +40,7 @@
                 <h3 class="text-sm font-medium text-ink-gray-7 mb-3">
                   Styles
                 </h3>
-                <div class="flex flex-col gap-4 pb-5 pr-5">
+                <div class="flex flex-col gap-4 pb-5 pe-5">
                   <FormControl
                     v-model="settings.font_family"
                     type="select"

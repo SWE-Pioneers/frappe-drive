@@ -183,13 +183,13 @@ const labelFunction = (val: Value, selected = false) => {
                   class="text-base leading-none text-ink-gray-7 rounded flex items-center h-7 px-2.5 py-1.5 relative select-none data-[disabled]:opacity-50 data-[disabled]:pointer-events-none data-[highlighted]:outline-none data-[highlighted]:bg-surface-gray-3"
                 >
                   <SelectItemText>
-                    <span class="flex items-center gap-2 pr-6 flex-1">
+                    <span class="flex items-center gap-2 pe-6 flex-1">
                       <RenderIcon :icon="getIcon(option)" />
                       {{ labelFunction(option) }}
                     </span>
                   </SelectItemText>
                   <SelectItemIndicator
-                    class="inline-flex ml-auto items-center justify-center"
+                    class="inline-flex ms-auto items-center justify-center"
                   >
                     <LucideCheck class="size-4" />
                   </SelectItemIndicator>

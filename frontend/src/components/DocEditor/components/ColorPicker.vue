@@ -3,7 +3,7 @@
     transition="default"
     placement="left"
     class="!block w-full"
-    popover-class="!min-w-fit !mr-[30px]"
+    popover-class="!min-w-fit !me-[30px]"
   >
     <template #target="{ togglePopover, isOpen }">
       <slot

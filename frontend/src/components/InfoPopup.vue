@@ -5,7 +5,7 @@
   >
     <template #body-title>
       <h3
-        class="text-2xl font-semibold leading-6 text-ink-gray-9 cursor-pointer pr-2"
+        class="text-2xl font-semibold leading-6 text-ink-gray-9 cursor-pointer pe-2"
         @click="emitter.emit('rename')"
       >
         {{ entity.title }}
@@ -123,7 +123,7 @@
               size="sm"
               :access-type="getGeneralAccess.data.type"
               :show-text="true"
-              class="-mr-[3px]"
+              class="-me-[3px]"
             />
           </div>
         </li>

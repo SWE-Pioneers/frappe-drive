@@ -19,7 +19,7 @@
       :class="editable && 'border rounded'"
       :editor-class="[
         'text-p-sm min-w-2 flex-grow',
-        editable && 'pl-2.5 py-1.5',
+        editable && 'ps-2.5 py-1.5',
       ]"
       :placeholder
       :bubble-menu="[

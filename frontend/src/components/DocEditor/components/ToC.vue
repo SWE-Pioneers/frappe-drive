@@ -29,7 +29,7 @@
     <Button
       variant="ghost"
       :tooltip="show ? 'Hide' : 'Table of Contents'"
-      class="!w-5.5 !h-5.5 mr-1.5 ml-1"
+      class="!w-5.5 !h-5.5 me-1.5 ms-1"
       @click="show = !show"
     >
       <template #icon>

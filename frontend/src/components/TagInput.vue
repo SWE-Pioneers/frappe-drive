@@ -19,7 +19,7 @@
           </span>
           <Button
             v-if="entity.write"
-            class="ml-auto !h-6 text-xs"
+            class="ms-auto !h-6 text-xs"
             @click="togglePopover()"
           >
             {{ __("Add") }}
@@ -100,7 +100,7 @@
         <div class="flex items-center justify-end border-t p-1">
           <Button
             v-if="tagInputText"
-            class="mr-auto text-sm !h-6"
+            class="me-auto text-sm !h-6"
             @click="
               (e) =>
                 $resources.createTag.submit({
