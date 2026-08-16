@@ -9,6 +9,7 @@
         :class="'h-10 w-auto'"
         :src="backupLink"
         :draggable="false"
+        alt=""
       >
       <img
         v-show="imgLoaded"
@@ -20,6 +21,7 @@
         :src="src"
         :draggable="false"
         @load="imgLoaded = true"
+        alt=""
       >
     </template>
     <!-- Direct padding doesn't work -->
@@ -51,6 +53,7 @@
           class="h-4 w-auto"
           :src="getIconUrl(file.file_type) || '/drive'"
           :draggable="false"
+          alt=""
         >
         <p class="truncate">
           {{ file.is_group ? childrenSentence + "∙" : "" }}

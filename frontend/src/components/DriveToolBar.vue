@@ -58,7 +58,7 @@
             <div
               class="flex items-center border rounded ps-2 py-1 h-7 text-base select-none"
             >
-              <img :src="icon" />
+              <img :src="icon" alt="" />
               <span class="text-sm ms-2">{{ name }}</span>
               <Button
                 variant="minimal"

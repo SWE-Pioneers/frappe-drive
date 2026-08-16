@@ -15,6 +15,7 @@
         class="h-[16px] w-[16px] rounded-sm"
         :src="backupLink"
         :draggable="false"
+        alt=""
       />
       <img
         v-show="imgLoaded"
@@ -22,6 +23,7 @@
         :src="src"
         :draggable="false"
         @load="imgLoaded = true"
+        alt=""
       />
     </template>
     <template #default="{ label }">
