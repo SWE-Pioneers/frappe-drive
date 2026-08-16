@@ -31,6 +31,7 @@
             <img
               class="size-4"
               :src="getIconUrl(entity.is_group ? 'Folder' : entity.file_type)"
+              alt=""
             >
             <span class="truncate">{{ entity.title }}</span>
           </div>

@@ -35,6 +35,7 @@
       class="h-full"
       :src="getIconUrl(entity.file_type)"
       :draggable="false"
+      alt=""
     >
     <span
       class="text-sm line-clamp-1 text-ink-gray-6"
