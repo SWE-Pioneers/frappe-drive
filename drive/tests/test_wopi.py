@@ -22,6 +22,7 @@ from drive.api.wopi import (  # noqa: E402
     lock_decision,
     mint_token,
     parse_wopi_path,
+    rewrite_origin,
     verify_token,
     wopi_action,
     wopi_permissions,
@@ -195,6 +196,42 @@ class ActionDispatch(unittest.TestCase):
     def test_other_methods_are_refused(self):
         for m in ["PUT", "DELETE", "PATCH", "OPTIONS", "", None]:
             self.assertEqual(wopi_action(m, False), "method_not_allowed")
+
+
+class DiscoveryOriginRewrite(unittest.TestCase):
+    """Collabora builds urlsrc from the host it was ASKED on. Discovery is fetched over the
+    container network, so the reply advertises a hostname only Docker can resolve — handing that
+    to an iframe is a blank editor with nothing in the server log."""
+
+    SRC = "http://collabora:9980/browser/abc123/cool.html?"
+
+    def test_replaces_the_unreachable_container_origin(self):
+        out = rewrite_origin(self.SRC, "https://office.swe.com.ly")
+        self.assertTrue(out.startswith("https://office.swe.com.ly/"), out)
+        self.assertNotIn("collabora:9980", out)
+
+    def test_keeps_the_versioned_path_and_query(self):
+        # The path is the release-specific cool.html location — the whole reason discovery is read
+        # instead of hardcoded. Losing the query would drop Collabora's own parameters.
+        out = rewrite_origin("http://collabora:9980/browser/abc123/cool.html?lang=ar&foo=1",
+                             "https://office.swe.com.ly")
+        self.assertIn("/browser/abc123/cool.html", out)
+        self.assertIn("lang=ar", out)
+        self.assertIn("foo=1", out)
+
+    def test_tolerates_a_trailing_slash_on_the_public_base(self):
+        self.assertEqual(rewrite_origin(self.SRC, "https://office.swe.com.ly/"),
+                         rewrite_origin(self.SRC, "https://office.swe.com.ly"))
+
+    def test_refuses_a_missing_or_relative_public_base(self):
+        # Failing loudly beats a silently unreachable iframe.
+        for bad in ["", None, "office.swe.com.ly", "/office"]:
+            with self.assertRaises(ValueError, msg=f"{bad!r} must be refused"):
+                rewrite_origin(self.SRC, bad)
+
+    def test_refuses_an_empty_urlsrc(self):
+        with self.assertRaises(ValueError):
+            rewrite_origin("", "https://office.swe.com.ly")
 
 
 class LockStateMachine(unittest.TestCase):

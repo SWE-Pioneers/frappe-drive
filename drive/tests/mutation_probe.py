@@ -79,6 +79,18 @@ MUTATIONS = [
         "test_write_requires_BOTH_the_grant_and_a_write_token",
     ),
     (
+        "discovery urlsrc is handed to the browser with the container origin intact",
+        "    parts = urlsplit(urlsrc)\n    pub = urlsplit(public_base.rstrip(\"/\"))",
+        "    return urlsrc\n    parts = urlsplit(urlsrc)\n    pub = urlsplit(public_base.rstrip(\"/\"))",
+        "test_replaces_the_unreachable_container_origin",
+    ),
+    (
+        "a relative or missing public base is accepted instead of refused",
+        '    if not public_base:\n        raise ValueError("a public base URL is required — a container hostname is not reachable "\n                         "from a browser")',
+        "    if not public_base:\n        public_base = 'http://x'",
+        "test_refuses_a_missing_or_relative_public_base",
+    ),
+    (
         "verify_token stops checking which file the token was minted for",
         '    if claims.get("f") != file_id:\n        raise WopiTokenError("token is not for this file")',
         "    if False:\n        raise WopiTokenError(\"x\")",

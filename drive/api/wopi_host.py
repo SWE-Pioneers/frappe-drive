@@ -42,6 +42,7 @@ from drive.api.wopi import (
     lock_decision,
     mint_token,
     parse_wopi_path,
+    rewrite_origin,
     verify_token,
     wopi_action,
     wopi_put_is_safe,
@@ -275,19 +276,33 @@ class WopiRenderer:
 
 # --- editor entry point -------------------------------------------------------------------------
 
-def _collabora_base() -> str:
-    """Where the Collabora container lives. Overridable per site because the editor is reached by
-    the BROWSER for the iframe but by the SERVER for discovery, and those are not always the same
-    host."""
+def _collabora_internal() -> str:
+    """Where the SERVER reaches Collabora, for discovery. Container-internal by default."""
     return (frappe.conf.get("collabora_url") or "http://collabora:9980").rstrip("/")
 
 
-def _discovery_urlsrc(extension: str) -> str | None:
-    """The editor URL Collabora advertises for this file type.
+def _collabora_public() -> str:
+    """Where the BROWSER reaches Collabora, for the editor iframe.
 
-    Read from `/hosting/discovery` rather than hardcoding `/browser/dist/cool.html`, because that
-    path has changed between Collabora releases and a hardcoded one breaks silently on upgrade —
-    the iframe just fails to load. Cached for an hour; discovery is a static document.
+    These are two different addresses and conflating them is the trap. Discovery is fetched
+    server-to-server over the container network, but Collabora builds every `urlsrc` in its reply
+    from the host it was ASKED on — so an internally-fetched discovery advertises
+    `http://collabora:9980/...`, a name that exists only inside Docker and that a browser can never
+    resolve. The iframe would simply never load, with nothing in the Frappe log to explain it.
+
+    So the origin is rewritten to the public one below. Fetching discovery through the public URL
+    instead would avoid the rewrite but requires the box to reach its own public hostname
+    (hairpin NAT), which is exactly the kind of thing that works in staging and not in production.
+    """
+    return (frappe.conf.get("collabora_public_url") or "").rstrip("/")
+
+
+def _discovery_urlsrc(extension: str) -> str | None:
+    """The editor URL Collabora advertises for this file type, rewritten to the public origin.
+
+    Read from `/hosting/discovery` rather than hardcoding `/browser/dist/cool.html`: that path has
+    moved between Collabora releases, and a hardcoded one breaks silently on upgrade — the iframe
+    just fails to load. Cached for an hour; discovery is a static document.
     """
     cache_key = "drive|wopi|discovery"
     cached = frappe.cache().get_value(cache_key)
@@ -298,7 +313,7 @@ def _discovery_urlsrc(extension: str) -> str | None:
 
         import requests
 
-        xml = requests.get(f"{_collabora_base()}/hosting/discovery", timeout=10).text
+        xml = requests.get(f"{_collabora_internal()}/hosting/discovery", timeout=10).text
         mapping = {}
         for app in ET.fromstring(xml).iter("app"):
             for action in app.iter("action"):
@@ -307,7 +322,17 @@ def _discovery_urlsrc(extension: str) -> str | None:
                     mapping.setdefault(ext, action.get("urlsrc"))
         frappe.cache().set_value(cache_key, json.dumps(mapping), expires_in_sec=3600)
 
-    return mapping.get((extension or "").lower().lstrip("."))
+    urlsrc = mapping.get((extension or "").lower().lstrip("."))
+    if not urlsrc:
+        return None
+
+    try:
+        return rewrite_origin(urlsrc, _collabora_public())
+    except ValueError as e:
+        # A missing or malformed public URL is a deployment mistake. Fail loudly here rather than
+        # handing the browser an unreachable container hostname and a blank iframe nobody can
+        # diagnose from the server side.
+        frappe.throw(f"Collabora is not reachable from a browser: {e}")
 
 
 @frappe.whitelist()

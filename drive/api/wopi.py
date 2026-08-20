@@ -316,6 +316,33 @@ def lock_decision(op: str, current_lock: str | None, request_lock: str | None = 
     return out(501, lock_header=cur)
 
 
+def rewrite_origin(urlsrc: str, public_base: str) -> str:
+    """Repoint a discovery `urlsrc` at the origin a BROWSER can actually reach, keeping its path
+    and query untouched.
+
+    Collabora builds every `urlsrc` from the host it was asked on. Discovery is fetched
+    server-to-server over the container network, so it advertises `http://collabora:9980/...` — a
+    name that resolves only inside Docker. Handing that to an iframe produces a blank editor and
+    nothing in the server log, because the failure happens in the browser.
+
+    Path and query MUST survive: the query carries Collabora's own parameters (`WOPISrc` is
+    appended to it later), and the path is the versioned `cool.html` location that moves between
+    releases — which is why it is read from discovery instead of being hardcoded.
+    """
+    from urllib.parse import urlsplit, urlunsplit
+
+    if not urlsrc:
+        raise ValueError("urlsrc is required")
+    if not public_base:
+        raise ValueError("a public base URL is required — a container hostname is not reachable "
+                         "from a browser")
+    parts = urlsplit(urlsrc)
+    pub = urlsplit(public_base.rstrip("/"))
+    if not pub.scheme or not pub.netloc:
+        raise ValueError(f"public base must be absolute, got {public_base!r}")
+    return urlunsplit((pub.scheme, pub.netloc, parts.path, parts.query, parts.fragment))
+
+
 def wopi_put_is_safe(new_size: int, current_size: int | None) -> bool:
     """False when a save would empty a document that currently has content.
 
