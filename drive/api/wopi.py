@@ -153,3 +153,64 @@ def check_file_info_payload(*, file_name: str, size: int, owner_id: str, user_na
         body["LastModifiedTime"] = last_modified_iso
     body.update(wopi_permissions(access, can_write_token))
     return {k: v for k, v in body.items() if v is not None}
+
+# --- request routing (pure) -------------------------------------------------------------------
+# WOPI clients derive `<WOPISrc>/contents` from the file URL, so the paths must literally be
+# /wopi/files/<id> and /wopi/files/<id>/contents. That cannot be expressed as /api/method/<dotted>.
+#
+# Frappe's supported mechanism is the `page_renderer` hook: a class with can_render()/render() that
+# path_resolver inserts BEFORE every built-in renderer, and whose build_response() returns arbitrary
+# bytes with arbitrary headers (needed for X-WOPI-Lock). frappe/app.py routes GET, HEAD and POST
+# through that same resolver, so the write path is reachable by the same route when it is built.
+#
+# Parsing and dispatch are kept pure so they are testable without a site.
+
+WOPI_PREFIX = "wopi/files/"
+
+
+def parse_wopi_path(path: str):
+    """('<file_id>', is_contents) for a WOPI path, else None.
+
+    `path` is Frappe's already-stripped route (no leading/trailing slash). Returns None for anything
+    that is not ours, so can_render() cannot accidentally swallow another app's route.
+    """
+    if not path:
+        return None
+    path = path.strip("/")
+    if not path.startswith(WOPI_PREFIX):
+        return None
+    rest = path[len(WOPI_PREFIX):]
+    if not rest:
+        return None
+    if rest.endswith("/contents"):
+        file_id = rest[: -len("/contents")]
+        return (file_id, True) if file_id and "/" not in file_id else None
+    return (rest, False) if "/" not in rest else None
+
+
+# X-WOPI-Override values we recognise. Anything else is a protocol operation we do not implement,
+# and must be refused explicitly rather than silently treated as PutFile.
+_LOCK_OPS = {"LOCK", "UNLOCK", "REFRESH_LOCK", "GET_LOCK", "PUT_RELATIVE", "RENAME_FILE", "DELETE"}
+
+
+def wopi_action(method: str, is_contents: bool, override: str | None = None) -> str:
+    """Map (method, path shape, X-WOPI-Override) to one of:
+    check_file_info | get_file | put_file | unsupported | method_not_allowed
+
+    Deliberately explicit: an unrecognised override must NOT fall through to a write. WOPI sends
+    several operations to the same URL and distinguishes them ONLY by this header.
+    """
+    method = (method or "").upper()
+    override = (override or "").upper().strip()
+    if method in ("GET", "HEAD"):
+        return "get_file" if is_contents else "check_file_info"
+    if method == "POST":
+        if is_contents:
+            # PutFile is the only POST to /contents. It OVERWRITES, so it stays unimplemented until
+            # locking and versioning exist.
+            return "put_file"
+        if override in _LOCK_OPS:
+            return "unsupported"
+        # An unknown override on the file URL is not a write. Refusing is the safe reading.
+        return "unsupported"
+    return "method_not_allowed"

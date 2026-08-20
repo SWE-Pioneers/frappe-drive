@@ -20,7 +20,9 @@ from drive.api.wopi import (  # noqa: E402
     WopiTokenError,
     check_file_info_payload,
     mint_token,
+    parse_wopi_path,
     verify_token,
+    wopi_action,
     wopi_permissions,
 )
 
@@ -133,6 +135,40 @@ class CheckFileInfoBody(unittest.TestCase):
     def test_ttl_is_never_zero(self):
         # 0 means "unknown" to a WOPI client, which then disables the session-refresh prompt.
         self.assertNotEqual(self._payload()["access_token_ttl"], 0)
+
+
+class PathParsing(unittest.TestCase):
+    def test_parses_both_wopi_shapes(self):
+        self.assertEqual(parse_wopi_path("wopi/files/ABC"), ("ABC", False))
+        self.assertEqual(parse_wopi_path("wopi/files/ABC/contents"), ("ABC", True))
+        self.assertEqual(parse_wopi_path("/wopi/files/ABC/contents/"), ("ABC", True))
+
+    def test_ignores_paths_that_are_not_ours(self):
+        # can_render() runs BEFORE every built-in renderer, so a greedy match here would swallow
+        # another app's route and 404 it.
+        for p in ["", None, "drive/x", "wopi", "wopi/files/", "wopi/files", "api/method/x",
+                  "wopi/files/a/b", "wopi/files/a/b/contents"]:
+            self.assertIsNone(parse_wopi_path(p), f"{p!r} must not be claimed")
+
+
+class ActionDispatch(unittest.TestCase):
+    def test_read_operations(self):
+        self.assertEqual(wopi_action("GET", False), "check_file_info")
+        self.assertEqual(wopi_action("GET", True), "get_file")
+        self.assertEqual(wopi_action("HEAD", False), "check_file_info")
+
+    def test_post_to_contents_is_putfile(self):
+        self.assertEqual(wopi_action("POST", True), "put_file")
+
+    def test_an_unknown_override_is_never_treated_as_a_write(self):
+        # WOPI sends several operations to the SAME url, distinguished only by X-WOPI-Override.
+        # Falling through to a write on an unrecognised value would overwrite a document.
+        for ov in ["LOCK", "UNLOCK", "REFRESH_LOCK", "GET_LOCK", "SOMETHING_NEW", "", None, "put"]:
+            self.assertEqual(wopi_action("POST", False, ov), "unsupported", f"override={ov!r}")
+
+    def test_other_methods_are_refused(self):
+        for m in ["PUT", "DELETE", "PATCH", "OPTIONS", "", None]:
+            self.assertEqual(wopi_action(m, False), "method_not_allowed")
 
 
 if __name__ == "__main__":
