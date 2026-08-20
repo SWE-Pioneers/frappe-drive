@@ -1,0 +1,3 @@
+# These scripts are executed on Linux (Docker builds, CI, bench hooks). Pin them to LF so a
+# Windows checkout cannot CRLF-corrupt a shebang and make them unrunnable.
+*.sh text eol=lf
