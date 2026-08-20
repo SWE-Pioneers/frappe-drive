@@ -219,6 +219,24 @@ class DiscoveryOriginRewrite(unittest.TestCase):
         self.assertIn("lang=ar", out)
         self.assertIn("foo=1", out)
 
+    def test_preserves_the_trailing_question_mark(self):
+        # Every one of the 276 urlsrc values Collabora advertises ends with `cool.html?`. The
+        # caller appends `WOPISrc=...` straight onto it, so dropping the separator yields
+        # `cool.htmlWOPISrc=...`, which 404s. urlunsplit drops an empty query — that is exactly the
+        # bug this pins, and it was found on the live box, not in review.
+        out = rewrite_origin(self.SRC, "https://office.swe.com.ly")
+        self.assertTrue(out.endswith("cool.html?"), out)
+        self.assertIn("WOPISrc=abc", out + "WOPISrc=abc")
+
+    def test_preserves_everything_after_the_origin_byte_for_byte(self):
+        src = "http://collabora:9980/browser/h/cool.html?lang=ar&x=1#frag"
+        out = rewrite_origin(src, "https://d.example.com")
+        self.assertEqual(out, "https://d.example.com/browser/h/cool.html?lang=ar&x=1#frag")
+
+    def test_refuses_a_relative_urlsrc(self):
+        with self.assertRaises(ValueError):
+            rewrite_origin("/browser/h/cool.html?", "https://d.example.com")
+
     def test_tolerates_a_trailing_slash_on_the_public_base(self):
         self.assertEqual(rewrite_origin(self.SRC, "https://office.swe.com.ly/"),
                          rewrite_origin(self.SRC, "https://office.swe.com.ly"))
