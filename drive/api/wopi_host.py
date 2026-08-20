@@ -358,7 +358,22 @@ def get_editor_config(entity_name: str):
 
     can_write = bool(access.get("write"))
     token, expiry_ms = mint_token(f.name, frappe.session.user, _secret(), can_write=can_write)
-    wopi_src = f"{frappe.utils.get_url()}/wopi/files/{f.name}"
+
+    # WOPISrc — where Collabora will call US back. It MUST be the https public URL:
+    #   * Collabora refuses any WOPI host not matching `aliasgroup1`, which is
+    #     `https://<host>:443` — an http WOPISrc simply does not match and the editor refuses to
+    #     open the document;
+    #   * the editor runs in an https page, so an http callback is mixed content anyway.
+    # `frappe.utils.get_url()` returns http when the site has no `host_name` set and there is no
+    # request to infer the scheme from — measured, it produced `http://drive.swe.com.ly/...` here.
+    # Failing loudly beats handing Collabora a URL it will silently reject.
+    site_url = (frappe.conf.get("wopi_host_url") or frappe.utils.get_url() or "").rstrip("/")
+    if not site_url.startswith("https://"):
+        frappe.throw(
+            f"WOPISrc must be https, got {site_url!r}. Set `host_name` (or `wopi_host_url`) in the "
+            "site config to the public https URL — Collabora rejects any host outside aliasgroup1."
+        )
+    wopi_src = f"{site_url}/wopi/files/{f.name}"
 
     return {
         "editor_url": urlsrc,

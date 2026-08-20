@@ -325,11 +325,16 @@ def rewrite_origin(urlsrc: str, public_base: str) -> str:
     name that resolves only inside Docker. Handing that to an iframe produces a blank editor and
     nothing in the server log, because the failure happens in the browser.
 
-    Path and query MUST survive: the query carries Collabora's own parameters (`WOPISrc` is
-    appended to it later), and the path is the versioned `cool.html` location that moves between
-    releases — which is why it is read from discovery instead of being hardcoded.
+    EVERYTHING after the origin is preserved BYTE FOR BYTE, including a trailing `?`. That is not
+    cosmetic: every one of the 276 urlsrc values Collabora advertises ends with `cool.html?`, and
+    the trailing separator is part of the contract — the caller appends `WOPISrc=...` straight onto
+    it. Reassembling with `urlunsplit` drops an empty query, producing `cool.htmlWOPISrc=...`, a
+    URL that 404s. Measured against the live discovery document, not assumed.
+
+    So this does a prefix swap rather than a parse-and-rebuild. The path is the versioned
+    `cool.html` location that moves between releases, which is why it is read from discovery at all.
     """
-    from urllib.parse import urlsplit, urlunsplit
+    from urllib.parse import urlsplit
 
     if not urlsrc:
         raise ValueError("urlsrc is required")
@@ -340,7 +345,10 @@ def rewrite_origin(urlsrc: str, public_base: str) -> str:
     pub = urlsplit(public_base.rstrip("/"))
     if not pub.scheme or not pub.netloc:
         raise ValueError(f"public base must be absolute, got {public_base!r}")
-    return urlunsplit((pub.scheme, pub.netloc, parts.path, parts.query, parts.fragment))
+    if not parts.scheme or not parts.netloc:
+        raise ValueError(f"urlsrc must be absolute, got {urlsrc!r}")
+    origin = f"{parts.scheme}://{parts.netloc}"
+    return f"{pub.scheme}://{pub.netloc}" + urlsrc[len(origin):]
 
 
 def wopi_put_is_safe(new_size: int, current_size: int | None) -> bool:

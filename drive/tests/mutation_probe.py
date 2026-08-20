@@ -85,6 +85,12 @@ MUTATIONS = [
         "test_replaces_the_unreachable_container_origin",
     ),
     (
+        "the trailing '?' on the discovery urlsrc is dropped when rewriting the origin",
+        '    origin = f"{parts.scheme}://{parts.netloc}"\n    return f"{pub.scheme}://{pub.netloc}" + urlsrc[len(origin):]',
+        '    from urllib.parse import urlunsplit\n    return urlunsplit((pub.scheme, pub.netloc, parts.path, parts.query, parts.fragment))',
+        "test_preserves_the_trailing_question_mark",
+    ),
+    (
         "a relative or missing public base is accepted instead of refused",
         '    if not public_base:\n        raise ValueError("a public base URL is required — a container hostname is not reachable "\n                         "from a browser")',
         "    if not public_base:\n        public_base = 'http://x'",
