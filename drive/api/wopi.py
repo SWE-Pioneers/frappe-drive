@@ -1,15 +1,27 @@
 """WOPI host for Frappe Drive — the protocol Collabora/LibreOffice Online speaks to a storage backend.
 
-SCOPE, deliberately narrow (2026-08-20): this implements the READ path only —
-`CheckFileInfo` and `GetFile`. That is enough for Collabora to render a document.
-`PutFile` and the lock family are NOT implemented and return 501 rather than a stub, because
-WOPI's `PutFile` OVERWRITES: a wrong lock implementation loses a customer's work with no error
-and no version to recover from. That half needs Drive's versioning wired in first.
+SCOPE: read AND write — `CheckFileInfo`, `GetFile`, `PutFile`, and the lock family
+(`LOCK` / `UNLOCK` / `REFRESH_LOCK` / `GET_LOCK`). Collabora is the only WOPI client we serve, and
+it is what merges the concurrent edits of several staff into one editing session; this host's job
+is to hand the document out, arbitrate the lock, and take the saves back without losing bytes.
 
-Everything security-critical here is a PURE function of its arguments — token minting and
-verification, and the access-level mapping. The fork has no unit-test infrastructure and no test
-CI, so anything that needs a live site cannot be regression-tested at all; keeping the security
-core free of `frappe` is what makes `drive/tests/test_wopi.py` runnable with plain python.
+`PutFile` OVERWRITES, so it is the one operation here that can destroy a customer's work. Three
+guards, and none of them is optional:
+  * a save is refused unless the caller holds the lock (see `lock_decision`) — the whole point of
+    the lock family is that an unlocked overwrite is someone else's document;
+  * the write is ATOMIC (temp file + `os.replace`), so a save that dies half-way leaves the
+    previous document intact rather than a truncated one;
+  * a zero-byte body against a non-empty file is refused. That is what a crashed or disconnected
+    editor sends, and it is indistinguishable at the protocol level from a deliberate "empty the
+    document" — so it fails closed. `wopi_put_is_safe` is where that lives.
+
+This module is still FRAPPE-FREE, on purpose. Everything security-critical is a PURE function of
+its arguments — token minting and verification, the access mapping, the lock state machine, and the
+overwrite guard. The fork has no unit-test infrastructure and no test CI, so anything that needs a
+live site cannot be regression-tested at all; keeping this core importable without `frappe` is what
+makes `drive/tests/test_wopi.py` runnable with plain python. The Frappe glue — the renderer, the
+lock store, the secret, the entity lookups — lives in `drive/api/wopi_host.py`, which imports THIS
+module and never the other way round.
 
 Protocol notes worth keeping, each a documented trap:
   * `access_token_ttl` is an ABSOLUTE epoch-MILLISECONDS timestamp, not a duration. `0` means
@@ -119,9 +131,12 @@ def wopi_permissions(access: dict, can_write_token: bool = False) -> dict:
         "UserCanNotWriteRelative": True,   # no "Save As" into Drive yet — PutRelativeFile is unimplemented
         "ReadOnly": not write,
         "UserCanRename": False,            # renaming is Drive's own surface, not the editor's
-        "SupportsUpdate": False,           # flipped on with PutFile; advertising it without it breaks saves
-        "SupportsLocks": False,            # ditto — a client that believes we lock will not retry
-        "SupportsGetLock": False,
+        # These three are advertised together and must stay together: a client told SupportsUpdate
+        # without SupportsLocks will PutFile with no lock, which is precisely the unarbitrated
+        # overwrite the lock family exists to prevent.
+        "SupportsUpdate": True,
+        "SupportsLocks": True,
+        "SupportsGetLock": True,
         "SupportsRename": False,
         "HidePrintOption": not bool(access.get("read")),
         "HideExportOption": not bool(access.get("read")),
@@ -188,17 +203,26 @@ def parse_wopi_path(path: str):
     return (rest, False) if "/" not in rest else None
 
 
-# X-WOPI-Override values we recognise. Anything else is a protocol operation we do not implement,
-# and must be refused explicitly rather than silently treated as PutFile.
-_LOCK_OPS = {"LOCK", "UNLOCK", "REFRESH_LOCK", "GET_LOCK", "PUT_RELATIVE", "RENAME_FILE", "DELETE"}
+# X-WOPI-Override values we implement, mapped to our internal action name.
+_LOCK_OPS = {
+    "LOCK": "lock",
+    "UNLOCK": "unlock",
+    "REFRESH_LOCK": "refresh_lock",
+    "GET_LOCK": "get_lock",
+}
+# Recognised but deliberately NOT implemented. Named explicitly so they are refused as "we know
+# this operation and decline it" rather than falling into the unknown-override bucket.
+_DECLINED_OPS = {"PUT_RELATIVE", "RENAME_FILE", "DELETE"}
 
 
 def wopi_action(method: str, is_contents: bool, override: str | None = None) -> str:
     """Map (method, path shape, X-WOPI-Override) to one of:
-    check_file_info | get_file | put_file | unsupported | method_not_allowed
+    check_file_info | get_file | put_file | lock | unlock | refresh_lock | get_lock |
+    unsupported | method_not_allowed
 
     Deliberately explicit: an unrecognised override must NOT fall through to a write. WOPI sends
-    several operations to the same URL and distinguishes them ONLY by this header.
+    several operations to the SAME URL and distinguishes them ONLY by this header, so a permissive
+    default here would turn a typo'd or hostile header into an overwrite.
     """
     method = (method or "").upper()
     override = (override or "").upper().strip()
@@ -206,11 +230,102 @@ def wopi_action(method: str, is_contents: bool, override: str | None = None) -> 
         return "get_file" if is_contents else "check_file_info"
     if method == "POST":
         if is_contents:
-            # PutFile is the only POST to /contents. It OVERWRITES, so it stays unimplemented until
-            # locking and versioning exist.
+            # PutFile is the only POST to /contents.
             return "put_file"
         if override in _LOCK_OPS:
+            return _LOCK_OPS[override]
+        if override in _DECLINED_OPS:
             return "unsupported"
         # An unknown override on the file URL is not a write. Refusing is the safe reading.
         return "unsupported"
     return "method_not_allowed"
+
+
+# --- lock state machine (pure) -----------------------------------------------------------------
+# WOPI locks are ADVISORY strings chosen by the client, not by us. The rules below are the ones
+# Collabora actually relies on; getting a conflict response wrong is worse than not locking at all,
+# because the client believes its lock is held and keeps editing against a document someone else
+# now owns.
+#
+# On EVERY conflict the current lock must be echoed back in `X-WOPI-Lock`. A bare 409 makes the
+# client retry forever instead of recovering, so `lock_header` is part of the decision, not an
+# afterthought for the caller to remember.
+
+LOCK_TTL_SECONDS = 30 * 60  # WOPI: a lock expires after 30 minutes unless refreshed
+
+
+def lock_decision(op: str, current_lock: str | None, request_lock: str | None = None,
+                  old_lock: str | None = None, file_size: int | None = None) -> dict:
+    """Decide a lock-family (or PutFile) operation. PURE — no I/O, no clock, no frappe.
+
+    Returns {"status", "action", "new_lock", "lock_header", "write"} where `action` is one of
+    "set" (store new_lock with a fresh TTL) | "touch" (extend the existing TTL) | "clear" (delete)
+    | "none", and `write` says whether the file bytes may be replaced.
+    """
+    op = (op or "").upper()
+    cur = current_lock or ""
+    req = request_lock or ""
+
+    def out(status, action="none", new_lock=None, lock_header="", write=False):
+        return {"status": status, "action": action, "new_lock": new_lock,
+                "lock_header": lock_header, "write": write}
+
+    if op == "GET_LOCK":
+        # Always 200, even when unlocked — an empty X-WOPI-Lock IS the answer "not locked".
+        return out(200, lock_header=cur)
+
+    if op in ("LOCK", "UNLOCK", "REFRESH_LOCK") and not req:
+        # A lock identifier is mandatory for these. Treating "" as a wildcard would let any client
+        # steal or drop any lock.
+        return out(400, lock_header=cur)
+
+    if op == "LOCK":
+        if old_lock is not None:
+            # "Unlock and relock": valid ONLY if the caller correctly names the lock it is replacing.
+            if cur and cur == old_lock:
+                return out(200, action="set", new_lock=req, lock_header=req)
+            return out(409, lock_header=cur)
+        if not cur:
+            return out(200, action="set", new_lock=req, lock_header=req)
+        if cur == req:
+            # Re-locking with the same id is a refresh, not a conflict.
+            return out(200, action="touch", lock_header=req)
+        return out(409, lock_header=cur)
+
+    if op == "REFRESH_LOCK":
+        if cur and cur == req:
+            return out(200, action="touch", lock_header=req)
+        return out(409, lock_header=cur)
+
+    if op == "UNLOCK":
+        if cur and cur == req:
+            return out(200, action="clear", lock_header="")
+        return out(409, lock_header=cur)
+
+    if op == "PUT":
+        if not cur:
+            # An unlocked PutFile is legal in exactly one case: the initial save of a document that
+            # is still empty. Anything else is an unarbitrated overwrite and must be refused.
+            if file_size == 0:
+                return out(200, write=True, lock_header="")
+            return out(409, lock_header="")
+        if cur == req:
+            return out(200, action="touch", lock_header=req, write=True)
+        return out(409, lock_header=cur)
+
+    return out(501, lock_header=cur)
+
+
+def wopi_put_is_safe(new_size: int, current_size: int | None) -> bool:
+    """False when a save would empty a document that currently has content.
+
+    A crashed, killed or disconnected editor sends a zero-length body, and at the protocol level
+    that is identical to a deliberate "make this document empty". The two are not equally costly:
+    refusing a genuine emptying is a support ticket, accepting a spurious one destroys the file. So
+    it fails closed. Deliberately allows 0 -> 0 (already empty, nothing to lose).
+    """
+    if new_size is None or new_size < 0:
+        return False
+    if new_size == 0 and (current_size or 0) > 0:
+        return False
+    return True

@@ -13,6 +13,13 @@ website_route_rules = [
     {"from_route": "/drive/<path:app_path>", "to_route": "drive"},
 ]
 
+# WOPI host for Collabora / LibreOffice Online. A page_renderer (not a whitelisted method) because
+# a WOPI client derives `<WOPISrc>/contents` from the file URL, so the routes must literally be
+# /wopi/files/<id> and /wopi/files/<id>/contents — a shape /api/method/<dotted.path> cannot take.
+# Custom renderers run BEFORE every built-in one, so its can_render() is deliberately strict and
+# claims nothing outside that prefix.
+page_renderer = ["drive.api.wopi_host.WopiRenderer"]
+
 add_to_apps_screen = [
     {
         "name": "drive",

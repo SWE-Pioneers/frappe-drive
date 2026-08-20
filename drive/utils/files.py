@@ -235,6 +235,36 @@ class FileManager:
             with open(self.site_folder / path, "w") as f:
                 f.write(content)
 
+    def save_file_bytes(self, drive_file, data: bytes) -> int:
+        """Replace a file's stored bytes ATOMICALLY. Returns the number of bytes written.
+
+        Separate from `write_file` above on purpose, which must not be used for this:
+          * it opens in TEXT mode, which corrupts every binary office document, and
+          * its S3 branch is a bare `pass` — a silent no-op that reports success while storing
+            nothing. For a WOPI save that is a customer's document destroyed with no error.
+
+        On disk the write goes to a temp file, is fsynced, and is then moved into place with
+        `os.replace`, which is atomic on POSIX. A save that dies half-way therefore leaves the
+        PREVIOUS document intact instead of a truncated one. `put_object` is already atomic on S3.
+        """
+        if self.s3_enabled:
+            self.conn.put_object(Bucket=self.get_bucket(drive_file.team), Key=drive_file.path, Body=data)
+        else:
+            dest = self.site_folder / drive_file.path
+            tmp = dest.with_name(dest.name + ".wopi-tmp")
+            try:
+                with open(tmp, "wb") as f:
+                    f.write(data)
+                    f.flush()
+                    os.fsync(f.fileno())
+                os.replace(tmp, dest)
+            finally:
+                # A crash between write and replace must not leave the temp file behind for the
+                # next save to trip over.
+                if os.path.exists(tmp):
+                    os.remove(tmp)
+        return len(data)
+
     @contextmanager
     def open_file(self, path):
         """
