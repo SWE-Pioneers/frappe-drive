@@ -86,10 +86,11 @@ import { toggleFav, clearRecent } from "@/resources/files"
 import { allUsers } from "@/resources/permissions"
 import { entitiesDownload } from "@/utils/download"
 import { ref, computed, watch, watchEffect, provide, inject } from "vue"
-import { useRoute } from "vue-router"
+import { useRoute, useRouter } from "vue-router"
 import { useEventListener } from "@vueuse/core"
 import { useStore } from "vuex"
 import { openEntity } from "@/utils/files"
+import { isOfficeFile } from "@/utils/office"
 import { toast } from "@/utils/toasts"
 import { move } from "@/resources/files"
 import { LoadingIndicator } from "frappe-ui"
@@ -97,6 +98,7 @@ import { settings } from "@/resources/permissions"
 import emitter from "@/emitter"
 
 import LucideClock from "~icons/lucide/clock"
+import LucideFileEdit from "~icons/lucide/file-edit"
 import LucideDownload from "~icons/lucide/download"
 import LucideExternalLink from "~icons/lucide/external-link"
 import LucideEye from "~icons/lucide/eye"
@@ -119,6 +121,7 @@ const props = defineProps({
   getEntities: Object,
 })
 const route = useRoute()
+const router = useRouter()
 const store = useStore()
 
 const dialog = ref("")
@@ -305,6 +308,16 @@ const actionItems = computed(() => {
         icon: LucideExternalLink,
         action: ([entity]) => openEntity(entity),
         isEnabled: (e) => e.is_link,
+      },
+      {
+        // Collabora. Only offered for types Collabora can actually edit, and only when the file is
+        // not a link/folder — an editor that opens and then refuses the file is worse than no button.
+        label: __("Open in LibreOffice"),
+        icon: LucideFileEdit,
+        isEnabled: (e) => isOfficeFile(e),
+        action: ([entity]) =>
+          router.push({ name: "OfficeEditor", params: { entityName: entity.name } }),
+        important: true,
       },
       { divider: true },
       {

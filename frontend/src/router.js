@@ -151,6 +151,16 @@ const routes = [
     props: true,
   },
   {
+    // Collabora / LibreOffice editing. NOT allowGuest: the editor config mints a WOPI token bound
+    // to the signed-in user, so an anonymous visitor has no identity to mint one for.
+    path: "/o/:entityName/:slug?",
+    name: "OfficeEditor",
+    component: () => import("@/pages/OfficeEditor.vue"),
+    meta: { filePage: true },
+    beforeEnter: [manageBreadcrumbs],
+    props: true,
+  },
+  {
     path: "/d/:entityName/:slug?",
     name: "Folder",
     component: () => import("@/pages/Folder.vue"),
