@@ -107,6 +107,16 @@ def _apply_lock(file_id: str, decision: dict) -> None:
         frappe.cache().delete_value(_lock_key(file_id))
 
 
+def wopi_lock_holder(file_id: str) -> str:
+    """The WOPI lock currently held on this file, or "" if none.
+
+    Public because the lock is not a WOPI-internal detail: any code path that REPLACES a file's
+    bytes has to respect it, or it silently destroys whatever the open editor session is about to
+    save. `drive.api.files.edit_file_content` is the other such path.
+    """
+    return _get_lock(file_id)
+
+
 # --- helpers -----------------------------------------------------------------------------------
 
 def _reply(status: int, body: bytes = b"", lock: str | None = None, mimetype="application/octet-stream"):

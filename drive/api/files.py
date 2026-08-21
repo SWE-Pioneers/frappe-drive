@@ -458,6 +458,19 @@ def edit_file_content(entity_name, client=None):
     if not user_has_permission(entity, "write"):
         frappe.throw("You cannot edit this file", frappe.PermissionError)
 
+    # REFUSE while the document is open in Collabora. This function REPLACES the stored bytes of an
+    # existing entity (delete_file + upload_file below), so writing here while an editor session
+    # holds the WOPI lock destroys whatever that session is about to save — and the editor gets no
+    # error, it just overwrites us back on its next autosave. One of the two has to lose; it should
+    # be the one that can be told why.
+    from drive.api.wopi_host import wopi_lock_holder
+
+    if wopi_lock_holder(entity.name):
+        frappe.throw(
+            "This document is open in LibreOffice. Close the editor before replacing the file.",
+            frappe.ValidationError,
+        )
+
     file = frappe.request.files["file"]
     home_folder = get_home_folder(entity.team)
     temp_path = get_upload_path(home_folder["path"], f"editing_{secure_filename(entity.title)}")
