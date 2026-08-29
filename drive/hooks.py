@@ -8,6 +8,7 @@ app_icon = "octicon octicon-file-directory"
 app_color = "grey"
 app_email = "developers@frappe.io"
 app_license = "GNU Affero General Public License v3.0"
+required_apps = ["swe_platform"]
 
 website_route_rules = [
     {"from_route": "/drive/<path:app_path>", "to_route": "drive"},
